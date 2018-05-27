@@ -1,12 +1,14 @@
-window.onload = function() {
+﻿window.onload = function() {
 
     var $toBtn = $('#_to');
     var $unreadChat = $('#_chatStatusTypeUnread');
     var $allChat = $('#_chatStatusAll');
+    var $messageLow;
 
     var hideMode = false;
     var showUnread = false;
-    
+    var showMessageLow = false;
+
     const CHATWORK_CLASS = {
     		TIMELINE_MESSAGE : '.timelineMessage',
     		TIMELINE_MESSAGE_USER_NAME : '.timelineMessage__userName',
@@ -17,9 +19,17 @@ window.onload = function() {
     /*---------------------------*/
     function _init() {
     	_bindShortCutEvents();
-   $('#_roomListItems').on('click', function(event) {
-        setTimeout(_bindDblClick, 500);
-    });
+        _bindDblClick();
+        _addElements();
+        _bindOptionEvents();
+    }
+
+    function _addElements() {
+       var meButton = '<li role="button" class="_showDescription" id="_showToMe" aria-label="自分宛のメッセージを表示します" style="display: inline-block;"><span class="" style="color:#FFF; background-color:#66A300; padding: 3px 4px; font-size: 10px; border-radius: 3px; position: relative; top: -2px;">&nbsp;ME&nbsp;</span></li>';
+       $('#_chatSendTool').append(meButton);
+
+       $('body').append('<div id="message_row" style="height:100%; display:none; position:fixed; top:0px; right:0px; z-index:9999999; background:#F3F3F3; width:300px; overflow:scroll;"></div>');
+       $messageLow = $('#message_row');
     }
 
     /**
@@ -49,9 +59,18 @@ window.onload = function() {
 
         // 自分のメッセージのみ表示
         shortcut.add("Ctrl+Shift",function() {
-//             _changeMessage(_getLoginUserName(), true);
-        	_showMinMessage();
+             _changeMessage(_getLoginUserName(), true);
         });
+    }
+
+    function _bindOptionEvents() {
+
+       $('#_roomListItems').on('click', function(event) {
+          _initMessageLow();
+          setTimeout(_bindDblClick, 500);
+       });
+       
+       $('#_showToMe').on('click', _showToMeMessage);
     }
 
 
@@ -62,35 +81,24 @@ window.onload = function() {
            if (!targetUserName || targetUserName === '') {
                return;
            }
-           var reply = $(this).find('._replyMessage').text();
-           if (!reply || reply === '') {
-               return;
-           }
-           _showThreadMessage($(this).find('._replyMessage').data('mid'));
-           // _changeMessage(targetUserName, true);
+           _changeMessage(targetUserName, true);
            // _showMinMessage(targetUserName, true);
         });
     }
 
-    function _showThreadMessage(messageId) {
-    	$('body').append('<div id="message_row" style="position:fixed; top:0px; right:0px; z-index:9999999; background:#F3F3F3; width:300px; overflow:scroll;"></div>');
-    	var $messageLow = $('#message_row');
-    	
-        var messageList = $(CHATWORK_CLASS.TIMELINE_MESSAGE);
-        var appendHTML = '';
-        for (i=0; i < messageList.length; i++) {
-          var $targetMessage = $(messageList[i]); 
-          if ($targetMessage.data('mid') === messageId) {
-             appendHTML += $targetMessage.html();
-          }
-        }
-        $messageLow.append(appendHTML);
+    function _initMessageLow() {
+           $messageLow.hide();
+           $messageLow.empty();
+           showMessageLow = false;
     }
 
-    function _showMinMessage() {
-    	$('body').append('<div id="message_row" style="position:fixed; top:0px; right:0px; z-index:9999999; background:#F3F3F3; width:300px; overflow:scroll;"></div>');
-    	var $messageLow = $('#message_row');
-    	
+    // 自分宛のメッセージを表示する
+    function _showToMeMessage() {
+        if (showMessageLow) {
+           _initMessageLow();
+           return;
+        }
+    	var prevUserName = '';
         var messageList = $(CHATWORK_CLASS.TIMELINE_MESSAGE);
         var appendHTML = '';
         var loginUserName = _getLoginUserName();
@@ -101,9 +109,31 @@ window.onload = function() {
              appendHTML += $targetMessage.html();
           }
         }
+        if (appendHTML === '') {
+          appendHTML = '自分宛のメッセージはありません';
+        }
+        $messageLow.append(appendHTML);
+        $messageLow.show();
+        showMessageLow = true;
+    }
+
+    function _showMinMessage(targetName, isShowSelf) {
+    	
+    	var $messageLow = $('#message_row');
+    	var prevUserName = '';
+        var messageList = $(CHATWORK_CLASS.TIMELINE_MESSAGE);
+        var appendHTML = '';
+        for (i=0; i < messageList.length; i++) {
+          var $targetMessage = $(messageList[i]);
+          var userName = _getUserName($targetMessage);
+          if (!_isChangeTarget(isShowSelf, userName, targetName, prevUserName)) {
+        	  appendHTML += $targetMessage.html();
+          }
+          prevUserName = userName;
+        }
         $messageLow.append(appendHTML);
     }
-    
+
     /**
      * @return {String} loginUserName
      */
