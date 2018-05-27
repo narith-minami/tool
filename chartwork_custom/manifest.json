@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "Chatwork Custom",
+  "description": "for chatwork useful",
+  "version": "1.0",
+  "browser_action": {
+    "default_icon": "icon.png"
+  },
+  "content_scripts": [
+    {
+        "matches": [ "https://www.chatwork.com/*" ],
+        "js":  ["jquery.min.js","main.js","shortcut.js"],
+        "css": ["main.css"]
+    }
+  ]
+}

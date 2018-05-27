@@ -1,0 +1,13 @@
+#message_row > .timelineMessage__header {
+	display:none;
+}
+
+#message_row > .timelineMessage__body {
+	overflow: hidden;
+	height: 72px;
+	color: #FFF;
+}
+
+#message_row > .timelineMessage__timeStamp {
+	display:none;
+}
